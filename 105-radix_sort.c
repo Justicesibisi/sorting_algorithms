@@ -1,51 +1,92 @@
 #include "sort.h"
 
 /**
-* stupify - recurrssive heapSort
-* @array: Array of int
-* @heap: size of heap data
-* @i: index
-* @size: size of array
-*/
+ * int_array_init - initializes an int array of size size filled with 0
+ *
+ * @size: the wanted size of the array
+ *
+ * Return: the new filled array, or NULL on failure
+ */
 
-void stupify(int *array, int heap, int i, int size)
+int *int_array_init(size_t size)
 {
-	int lar = i, left = 2 * i + 1, right = 2 * i + 2, t;
+	int *new = NULL;
+	size_t i;
 
-	if (left < heap && array[left] > array[lar])
-		lar = left;
-	if (right < heap && array[right] > array[lar])
-		lar = right;
-	if (lar != i)
+	new = malloc(sizeof(int) * size);
+	if (new)
 	{
-		t = array[i], array[i] = array[lar], array[lar] = t;
-		print_array(array, size);
-		stupify(array, heap, lar, size);
+		for (i = 0; i < size; i++)
+			new[i] = 0;
+	}
+
+	return (new);
+}
+
+/**
+ * count_sort - sorts an array of integers using counting sort
+ *
+ * @array: the array of integers
+ * @size: the size of the array
+ * @exp: the exponent value of 10
+ */
+
+void count_sort(int *array, size_t size, int exp)
+{
+	int *count = NULL, *output = NULL;
+	size_t i;
+
+	count = int_array_init(10 + 1);
+	if (count)
+	{
+		/* Histogram of the number of times a key occurs within the input */
+		for (i = 0; i < size; i++)
+			count[(array[i] / exp) % 10] += 1;
+
+		/* Prefix sum computation on count to determine the position range */
+		for (i = 1; i <= 10; i++)
+			count[i] += count[i - 1];
+
+		output = int_array_init(size);
+		if (output)
+		{
+			/* Moving each item into its sorted position in the output array */
+			for (i = size - 1; (int)i >= 0; i--)
+			{
+				output[count[(array[i] / exp) % 10] - 1] = array[i];
+				count[(array[i] / exp) % 10] -= 1;
+			}
+
+			for (i = 0; i < size; i++)
+				array[i] = output[i];
+
+			free(output);
+		}
+		free(count);
 	}
 }
 
 /**
-* heap_sort - Sorts array with heap sort algo
-* @array: array to sort
-* @size: Size of array to sort
-*/
+ * radix_sort - sorts an array of integers using LSD radix sort
+ *
+ * @array: the array of integers
+ * @size: the size of the array
+ */
 
-void heap_sort(int *array, size_t size)
+void radix_sort(int *array, size_t size)
 {
-	int i = size / 2 - 1, temp;
+	int k = -1, exp;
+	size_t i;
 
-	if (array == NULL || size < 2)
+	if (size < 2)
 		return;
-	for (; i >= 0; i--)
-		stupify(array, size, i, size);
-	for (i = size - 1; i >= 0; i--)
-	{
-		temp = array[0];
-		array[0] = array[i];
-		array[i] = temp;
-		if (i > 0)
-			print_array(array, size);
-		stupify(array, i, 0, size);
-	}
 
+	for (i = 0; i < size; i++)
+		k = array[i] > k ? array[i] : k;
+
+	for (exp = 1; k / exp > 0; exp *= 10)
+	{
+		count_sort(array, size, exp);
+		print_array(array, size);
+	}
 }
